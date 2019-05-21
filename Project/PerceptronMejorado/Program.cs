@@ -1,53 +1,53 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 
 namespace PerceptronVideo
 {
     class Program
     {
-        static string inputPath = @"..\..\..\DataSets\AND.csv";
-        static string outputPath = @"..\..\..\DataSets\salida.csv";
-        static string neuralNetworkPath = @"..\..\..\DataSets\NN.bin";
+        static readonly string inputPath = @"..\..\..\DataSets\AND.csv";
+        static readonly string outputPath = @"..\..\..\DataSets\salida.csv";
+        static readonly string neuralNetworkPath = @"..\..\..\DataSets\NN.json";
 
-        static int inputCount = 2;
-        static int outputCount = 1;
+        static readonly int inputCount = 2;
+        static readonly int outputCount = 1;
 
-        static bool saveNetwork = true;
-        static bool loadNetwork = true;
+        //static bool saveNetwork = true;
+        static bool loadNetwork = false;
 
-        static double inputMax = 1;
-        static double inputMin = 0;
+        static readonly double inputMax = 1;
+        static readonly double inputMin = 0;
 
-        static double outputMax = 1;
-        static double outputMin = 0;
+        static readonly double outputMax = 1;
+        static readonly double outputMin = 0;
 
-        static List<double[]> input = new List<double[]>();
-        static List<double[]> output = new List<double[]>();
+        static readonly List<double[]> input = new List<double[]>();
+        static readonly List<double[]> output = new List<double[]>();
 
         static void ReadData()
         {
-            string data = System.IO.File.ReadAllText(inputPath).Replace("\r", "");//.Replace(",", ".");
-            string[] row = data.Split(Environment.NewLine.ToCharArray());
-            for (int i = 0; i < row.Length; i++)
+            var data = File.ReadAllText(inputPath).Replace("\r", "");//.Replace(",", ".");
+            var row = data.Split(Environment.NewLine.ToCharArray());
+
+            for (var i = 0; i < row.Length; i++)
             {
-                string[] rowData = row[i].Split(';');
+                var rowData = row[i].Split(';');
 
-                double[] inputs = new double[inputCount];
-                double[] outputs = new double[outputCount];
+                var inputs = new double[inputCount];
+                var outputs = new double[outputCount];
 
-                for (int j = 0; j < rowData.Length; j++)
+                for (var j = 0; j < rowData.Length; j++)
                 {
                     if (j < inputCount)
-                    {                        
-                        inputs[j] = normalize(double.Parse(rowData[j]), inputMin, inputMax);
-                       // Console.WriteLine(inputs[j]);
+                    {
+                        inputs[j] = Normalize(double.Parse(rowData[j]), inputMin, inputMax);
+                        // Console.WriteLine(inputs[j]);
                     }
                     else
                     {
-                        outputs[j - inputCount] = normalize(double.Parse(rowData[j]), outputMin, outputMax);
+                        outputs[j - inputCount] = Normalize(double.Parse(rowData[j]), outputMin, outputMax);
                         //Console.WriteLine(outputs[j - inputCount]);
                     }
                 }
@@ -58,40 +58,42 @@ namespace PerceptronVideo
 
         }
 
-
-        static double normalize(double val, double min, double max)
+        private static double Normalize(double val, double min, double max)
         {
             return (val - min) / (max - min);
         }
-        static double inverseNormalize(double val, double min, double max)
+
+        private static double InverseNormalize(double val, double min, double max)
         {
             return val * (max - min) + min;
         }
 
-        static void Evaluate(Perceptron p, double from, double to, double step)
-        { 
-            string output = "";
-            for (double i = from; i < to; i += step)
+        private static void Evaluate(Perceptron p, double from, double to, double step)
+        {
+            var output = "";
+            for (var i = from; i < to; i += step)
             {
-                double res = p.Activate(new double[] { normalize(i, inputMin, inputMax) })[0];
+                var res = p.Activate(new double[] { Normalize(i, inputMin, inputMax) })[0];
 
 
-                output += i + ";" + inverseNormalize(res, outputMin, outputMax) + "\n";
+                output += i + ";" + InverseNormalize(res, outputMin, outputMax) + "\n";
                 Console.WriteLine(i + ";" + res + "\n");
             }
 
-            System.IO.File.WriteAllText(outputPath, output);
+            File.WriteAllText(outputPath, output);
         }
 
 
-        static void Main(string[] args)
+        public static void Main()
         {
             Perceptron p;
 
-            int[] net_def = new int[] { inputCount, 10, 10, outputCount };
-            double learning_rate = 0.3;
-            double max_error = 0.0001;
-            int max_iter = 1000000;
+            var net_def = new int[] { inputCount, 10, 10, outputCount };
+            var learning_rate = 0.3;
+            var max_error = 0.0001;
+            var max_iter = 1000000;
+
+            loadNetwork = File.Exists(neuralNetworkPath);
 
             if (!loadNetwork)
             {
@@ -101,329 +103,72 @@ namespace PerceptronVideo
                 while (!p.Learn(input, output, learning_rate, max_error, max_iter, neuralNetworkPath, 10000))
                 {
                     p = new Perceptron(net_def);
-                }              
+                }
             }
             else
             {
-                p = Perceptron.Load(neuralNetworkPath);
+                p = Perceptron.LoadNetwork(neuralNetworkPath);
             }
 
-
+            p.SaveNetwork(neuralNetworkPath);
 
             //Evaluate(p, 0, 5, 0.1);
 
 
             while (true)
             {
-                double[] val = new double[inputCount];
-                for (int i = 0; i < inputCount; i++)
+
+                var inputs = new double[inputCount];
+                for (var i = 0; i < inputCount;)
                 {
-                    Console.WriteLine("Inserte valor " + i + ": ");
-                    val[i] = normalize(double.Parse(Console.ReadLine()), inputMin, inputMax);
-                }
-                double[] sal = p.Activate(val);
-                for (int i = 0; i < outputCount; i++)
-                {
-                    Console.Write("Respuesta " + i + ": " + inverseNormalize(sal[i],outputMin, outputMax) + " ");
-                }
-                Console.WriteLine("");
-            }
+                    Console.WriteLine($"Value #{i}: ");
+                    var inputValue = Console.ReadLine();
 
-        }
-    }
-    
-    [Serializable]
-    class Perceptron
-    {
-        List<Layer> layers;
-
-        public Perceptron(int[] neuronsPerlayer)
-        {
-            layers = new List<Layer>();
-            Random r = new Random();
-
-            for (int i = 0; i < neuronsPerlayer.Length; i++)
-            {
-                layers.Add(new Layer(neuronsPerlayer[i], i == 0 ? neuronsPerlayer[i] : neuronsPerlayer[i - 1], r));
-            }
-        }
-        public double[] Activate(double[] inputs)
-        {
-            double[] outputs = new double[0];
-            for (int i = 1; i < layers.Count; i++)
-            {
-                outputs = layers[i].Activate(inputs);
-                inputs = outputs;
-            }
-            return outputs;
-        }
-        double IndividualError(double[] realOutput, double[] desiredOutput)
-        {
-            double err = 0;
-            for (int i = 0; i < realOutput.Length; i++)
-            {
-                err += Math.Pow(realOutput[i] - desiredOutput[i], 2);
-            }
-            return err;
-        }
-        double GeneralError(List<double[]> input, List<double[]> desiredOutput)
-        {
-            double err = 0;
-            for (int i = 0; i < input.Count; i++)
-            {
-                err += IndividualError(Activate(input[i]), desiredOutput[i]);
-            }
-            return err;
-        }
-        List<string> log;
-        public bool Learn(List<double[]> input, List<double[]> desiredOutput, double alpha, double maxError, int maxIterations, String net_path=null, int iter_save=1)
-        {
-            double err = 99999;
-            log = new List<string>();
-            int it = maxIterations;
-            while (err > maxError)
-            {
-                ApplyBackPropagation(input, desiredOutput, alpha);
-                err = GeneralError(input, desiredOutput);
-
-
-                if ((it - maxIterations) % 1000 ==0) {
-                    Console.WriteLine(err + " iterations: " + (it - maxIterations));
-                }
-
-
-                if (net_path != null)
-                {
-                    if ((it - maxIterations) % iter_save == 0)
+                    if (!string.IsNullOrEmpty(inputValue))
                     {
-                        save_net(net_path);
-                        Console.WriteLine("Save net to "+ net_path);
-                    }
-                }
+                        if (double.TryParse(inputValue, out var input))
+                        {
+                            var inputNormalized = Normalize(input, inputMin, inputMax);
+                            Console.WriteLine($"{input:F3} => {inputNormalized:F5}");
 
-                log.Add(err.ToString());                
-                maxIterations--;
-
-                if (Console.KeyAvailable)
-                {
-                    System.IO.File.WriteAllLines(@"LogTail.txt", log.ToArray());
-                    return true;
-                }
-
-                if (maxIterations <= 0)
-                {
-                    Console.WriteLine("MINIMO LOCAL");
-                    System.IO.File.WriteAllLines(@"LogTail.txt", log.ToArray());
-                    return false;
-                }
-
-            }
-            
-            System.IO.File.WriteAllLines(@"LogTail.txt", log.ToArray());
-            return true;
-        }
-
-        List<double[]> sigmas;
-        List<double[,]> deltas;
-
-        void SetSigmas(double[] desiredOutput)
-        {
-            sigmas = new List<double[]>();
-            for (int i = 0; i < layers.Count; i++)
-            {
-                sigmas.Add(new double[layers[i].numberOfNeurons]);
-            }
-            for (int i = layers.Count - 1; i >= 0; i--)
-            {
-                for (int j = 0; j < layers[i].numberOfNeurons; j++)
-                {
-                    if (i == layers.Count - 1)
-                    {
-                        double y = layers[i].neurons[j].lastActivation;
-                        sigmas[i][j] = (Neuron.Sigmoid(y) - desiredOutput[j]) * Neuron.SigmoidDerivated(y);
+                            inputs[i] = inputNormalized;
+                            i++;
+                        }
                     }
                     else
                     {
-                        double sum = 0;
-                        for (int k = 0; k < layers[i + 1].numberOfNeurons; k++)
-                        {
-                            sum += layers[i + 1].neurons[k].weights[j] * sigmas[i + 1][k];
-                        }
-                        sigmas[i][j] = Neuron.SigmoidDerivated(layers[i].neurons[j].lastActivation) * sum;
+                        goto byebye;
                     }
                 }
-            }
-        }
-        void SetDeltas()
-        {
-            deltas = new List<double[,]>();
-            for (int i = 0; i < layers.Count; i++)
-            {
-                deltas.Add(new double[layers[i].numberOfNeurons, layers[i].neurons[0].weights.Length]);
-            }
-        }
-        void AddDelta()
-        {
-            for (int i = 1; i < layers.Count; i++)
-            {
-                for (int j = 0; j < layers[i].numberOfNeurons; j++)
+
+                var outputs = p.Activate(inputs);
+                //for (var i = 0; i < outputCount; i++)
+                //{
+                var sbInputs = new StringBuilder();
+                var sbOutputs = new StringBuilder();
+
+                foreach (var inp in inputs)
                 {
-                    for (int k = 0; k < layers[i].neurons[j].weights.Length; k++)
-                    {
-                        deltas[i][j, k] += sigmas[i][j] * Neuron.Sigmoid(layers[i - 1].neurons[k].lastActivation);
-                    }
+                    if (sbInputs.Length > 0) sbInputs.Append(", ");
+                    sbInputs.Append($"{inp:F5}");
                 }
-            }
-        }
-        void UpdateBias(double alpha)
-        {
-            for (int i = 0; i < layers.Count; i++)
-            {
-                for (int j = 0; j < layers[i].numberOfNeurons; j++)
+
+                foreach (var o in outputs)
                 {
-                    layers[i].neurons[j].bias -= alpha * sigmas[i][j];
+                    var outValueDenormalized = InverseNormalize(o, outputMin, outputMax);
+
+                    if (sbOutputs.Length > 0) sbOutputs.Append(", ");
+                    sbOutputs.Append($"{o:F3}");
                 }
+
+                Console.Write($"Inputs: {sbInputs} => Outputs: {sbOutputs}");
+                //}
+
+                Console.WriteLine("");
             }
+
+        byebye:
+            Console.WriteLine("bye bye!");
         }
-        void UpdateWeights(double alpha)
-        {
-            for (int i = 0; i < layers.Count; i++)
-            {
-                for (int j = 0; j < layers[i].numberOfNeurons; j++)
-                {
-                    for (int k = 0; k < layers[i].neurons[j].weights.Length; k++)
-                    {
-                        layers[i].neurons[j].weights[k] -= alpha * deltas[i][j, k];
-                    }
-                }
-            }
-        }
-        void ApplyBackPropagation(List<double[]> input, List<double[]> desiredOutput, double alpha)
-        {
-            SetDeltas();
-            for (int i = 0; i < input.Count; i++)
-            {
-                Activate(input[i]);
-                SetSigmas(desiredOutput[i]);
-                UpdateBias(alpha);
-                AddDelta();
-            }
-            UpdateWeights(alpha);
-
-        }
-
-        public void save_net(String neuralNetworkPath)
-        {
-            FileStream fs = new FileStream(neuralNetworkPath, FileMode.Create);
-            BinaryFormatter formatter = new BinaryFormatter();
-            try
-            {
-                formatter.Serialize(fs, this);
-            }
-            catch (SerializationException e)
-            {
-                Console.WriteLine("Failed to serialize. Reason: " + e.Message);
-                throw;
-            }
-            finally
-            {
-                fs.Close();
-            }
-        }
-
-        public static Perceptron Load(String neuralNetworkPath)
-        {
-            FileStream fs = new FileStream(neuralNetworkPath, FileMode.Open);
-            Perceptron p = null;
-            try
-            {
-                BinaryFormatter formatter = new BinaryFormatter();
-
-                // Deserialize the hashtable from the file and 
-                // assign the reference to the local variable.
-                p = (Perceptron)formatter.Deserialize(fs);
-            }
-            catch (SerializationException e)
-            {
-                Console.WriteLine("Failed to deserialize. Reason: " + e.Message);
-                throw;
-            }
-            finally
-            {
-                fs.Close();
-            }
-
-            return p;
-        }
-    }
-
-    [Serializable]
-    class Layer
-    {
-        public List<Neuron> neurons;
-        public int numberOfNeurons;
-        public double[] output;
-
-        public Layer(int _numberOfNeurons, int numberOfInputs, Random r)
-        {
-            numberOfNeurons = _numberOfNeurons;
-            neurons = new List<Neuron>();
-            for (int i = 0; i < numberOfNeurons; i++)
-            {
-                neurons.Add(new Neuron(numberOfInputs, r));
-            }
-        }
-
-        public double[] Activate(double[] inputs)
-        {
-            List<double> outputs = new List<double>();
-            for (int i = 0; i < numberOfNeurons; i++)
-            {
-                outputs.Add(neurons[i].Activate(inputs));
-            }
-            output = outputs.ToArray();
-            return outputs.ToArray();
-        }
-
-    }
-
-    [Serializable]
-    class Neuron
-    {
-        public double[] weights;
-        public double lastActivation;
-        public double bias;
-
-        public Neuron(int numberOfInputs, Random r)
-        {
-            bias = 10 * r.NextDouble() - 5;
-            weights = new double[numberOfInputs];
-            for (int i = 0; i < numberOfInputs; i++)
-            {
-                weights[i] = 10 * r.NextDouble() - 5;
-            }
-        }
-        public double Activate(double[] inputs)
-        {
-            double activation = bias;
-
-            for (int i = 0; i < weights.Length; i++)
-            {
-                activation += weights[i] * inputs[i];
-            }
-
-            lastActivation = activation;
-            return Sigmoid(activation);
-        }
-        public static double Sigmoid(double input)
-        {
-            return 1 / (1 + Math.Exp(-input));
-        }
-        public static double SigmoidDerivated(double input)
-        {
-            double y = Sigmoid(input);
-            return y * (1 - y);
-        }
-
     }
 }
