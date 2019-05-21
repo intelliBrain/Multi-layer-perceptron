@@ -4,3 +4,10 @@ c:\users\asus\documents\visual studio 2015\Projects\PerceptronMejorado\Perceptro
 c:\users\asus\documents\visual studio 2015\Projects\PerceptronMejorado\PerceptronMejorado\obj\Debug\PerceptronMejorado.csprojResolveAssemblyReference.cache
 c:\users\asus\documents\visual studio 2015\Projects\PerceptronMejorado\PerceptronMejorado\obj\Debug\PerceptronMejorado.exe
 c:\users\asus\documents\visual studio 2015\Projects\PerceptronMejorado\PerceptronMejorado\obj\Debug\PerceptronMejorado.pdb
+C:\E_Github\intelliBrain\Multi-layer-perceptron\Project\PerceptronMejorado\bin\Debug\PerceptronMejorado.exe.config
+C:\E_Github\intelliBrain\Multi-layer-perceptron\Project\PerceptronMejorado\bin\Debug\PerceptronMejorado.exe
+C:\E_Github\intelliBrain\Multi-layer-perceptron\Project\PerceptronMejorado\bin\Debug\PerceptronMejorado.pdb
+C:\E_Github\intelliBrain\Multi-layer-perceptron\Project\PerceptronMejorado\obj\Debug\PerceptronMejorado.csprojAssemblyReference.cache
+C:\E_Github\intelliBrain\Multi-layer-perceptron\Project\PerceptronMejorado\obj\Debug\PerceptronMejorado.csproj.CoreCompileInputs.cache
+C:\E_Github\intelliBrain\Multi-layer-perceptron\Project\PerceptronMejorado\obj\Debug\PerceptronMejorado.exe
+C:\E_Github\intelliBrain\Multi-layer-perceptron\Project\PerceptronMejorado\obj\Debug\PerceptronMejorado.pdb
